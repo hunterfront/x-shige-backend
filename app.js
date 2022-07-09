@@ -12,6 +12,8 @@ let corsOptions = {
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
+const userRouter = require("./routes/user");
+const authRoute = require("./routes/auth");
 
 var app = express();
 
@@ -25,12 +27,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(function (req, res, next) {
+  res.header(
+    "Access-Control-Allow-Headers",
+    "x-access-token, Origin, Content-Type, Accept"
+  );
+  next();
+});
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
-// routes
-require("./routes/auth.routes")(app);
-require("./routes/user.routes")(app);
+app.use(userRouter);
+app.use(authRoute);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
