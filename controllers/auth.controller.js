@@ -52,7 +52,7 @@ exports.signin = async (req, res, next) => {
       username: user.username,
       email: user.email,
       roles: roles.map((role) => role.name),
-      accessToken: token,
+      accessToken: "Bearer " + token,
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
