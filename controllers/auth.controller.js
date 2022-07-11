@@ -1,12 +1,11 @@
 const config = require("../config/auth.config");
-
-var jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const { ERROR, CError } = require("../constants/ERROR");
-var bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 
 const userService = require("../services/user.service");
 
-exports.signup = async (req, res) => {
+exports.signup = async (req, res, next) => {
   // Save User to Database
   try {
     const user = await userService.createUser({
@@ -17,44 +16,54 @@ exports.signup = async (req, res) => {
     if (req.body.roles) {
       const roles = await userService.findRolesByNames(req.body.roles);
       await user.setRoles(roles);
-      res.send({ message: "User was registered successfully!" });
+      res.send({
+        code: 0,
+        message: "User was registered successfully!",
+      });
     } else {
       // user role = 1
       user.setRoles([1]).then(() => {
-        res.send({ message: "User was registered successfully!" });
+        res.send({
+          code: 0,
+          message: "User was registered successfully!",
+        });
       });
     }
   } catch (error) {
-    res.status(500).send({ message: error.message });
+    next(error);
   }
 };
 exports.signin = async (req, res, next) => {
   try {
     const user = await userService.findUserByName(req.body.username);
     if (!user) {
-      throw new CError(ERROR.LOGIN_REQUIRED, "You should login first");
+      return next(new CError(ERROR.DATA_INVALID, "用户名或密码错误"));
     }
 
-    var passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
+    const passwordIsValid = bcrypt.compareSync(
+      req.body.password,
+      user.password
+    );
     if (!passwordIsValid) {
-      return res.status(401).send({
-        accessToken: null,
-        message: "Invalid Password!",
-      });
+      return next(new CError(ERROR.DATA_INVALID, "用户名或密码错误"));
     }
 
-    var token = jwt.sign({ id: user.id }, config.secret, {
-      expiresIn: 86400, // 24 hours
+    const token = jwt.sign({ id: user.id }, config.secret, {
+      expiresIn: "20",
     });
     const roles = await user.getRoles();
-    res.status(200).send({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      roles: roles.map((role) => role.name),
-      accessToken: "Bearer " + token,
+    res.send({
+      code: 0,
+      message: "ok",
+      data: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        roles: roles.map((role) => role.name),
+        accessToken: "Bearer " + token,
+      },
     });
   } catch (error) {
-    res.status(500).send({ message: error.message });
+    next(error);
   }
 };

@@ -13,7 +13,6 @@ let corsOptions = {
 };
 
 var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
 const userRouter = require("./routes/user");
 const authRoute = require("./routes/auth");
 
@@ -25,7 +24,7 @@ app.set("view engine", "pug");
 
 app.use(
   expressjwt({ secret: config.secret, algorithms: ["HS256"] }).unless({
-    path: [/^\/api\//],
+    path: [/^\/api\//, "/"],
   })
 );
 app.use(cors(corsOptions));
@@ -43,7 +42,6 @@ app.use(function (req, res, next) {
 });
 
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
 app.use(userRouter);
 app.use(authRoute);
 
